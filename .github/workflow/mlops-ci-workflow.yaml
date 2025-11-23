@@ -1,0 +1,29 @@
+name: MLOPS CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  workflow:
+    runs-on: ubuntu-latest
+    steps:
+      
+      - name: Checkout Code
+        uses: actions/checkout@v5
+      
+      - name: Setup Python
+        used: actions/setup-python@
+        with:
+          python-version: '3.11.5'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - 
