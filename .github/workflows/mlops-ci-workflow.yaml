@@ -17,7 +17,7 @@ jobs:
         uses: actions/checkout@v5
       
       - name: Setup Python
-        used: actions/setup-python@
+        uses: actions/setup-python@6
         with:
           python-version: '3.11.5'
       
