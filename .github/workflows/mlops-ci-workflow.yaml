@@ -35,9 +35,13 @@ jobs:
       - name: Do Feature Engineering
         run: |
           python src/features/engineer.py \
-          --input_file data/processed/cleaned_house_data.csv \
-          --output_file data/featured_house_data.csv \
-          --preprocessor models/trained/preprocessor.pkl
+          --input data/processed/cleaned_house_data.csv \
+          --output data/featured_house_data.csv \
+          --preprocessor models/trained/preprocessor.
+          
+      - name: MLFlow Installation
+        run: |
+          docker pull 
       
       - name: Train the Model
         run: |
