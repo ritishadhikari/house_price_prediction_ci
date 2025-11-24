@@ -43,6 +43,13 @@ jobs:
         run: |
           sudo curl -L "https://github.com/docker/compose/releases/download/v2.24.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
           sudo chmod +x /usr/local/bin/docker-compose
+
+      - name: Prepare MLflow Volume Permissions
+        run: |
+          # Create the directory on the runner's filesystem that the volume will use
+          mkdir -p .mlflow_data
+          # Set permissions to be fully accessible (777) so the non-root user in the container can write
+          sudo chmod -R 777 .mlflow_data/
           
       - name: Setup MLFlow
         run: |
