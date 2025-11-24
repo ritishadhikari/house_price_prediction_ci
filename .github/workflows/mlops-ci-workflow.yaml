@@ -8,9 +8,28 @@ on:
     branches:
       - main
 
+
+
 jobs:
   workflow:
     runs-on: ubuntu-latest
+
+    services:
+      mlflow:
+        image: ghcr.io/mlflow/mlflow:latest
+        ports:
+          - 5555:5000
+        options: >-
+          --health-cmd="curl --fail http://localhost:5000/api/2.0/mlflow/experiments/list || exit 1"
+          --health-interval=5s
+          --health-timeout=3s
+          --health-retries=10
+        command: >
+          mlflow server
+          --host 0.0.0.0
+          --backend-store-uri sqlite:///mlflow.db
+          --default-artifact-root /tmp/mlruns
+
     steps:
       
       - name: Checkout Code
@@ -37,16 +56,7 @@ jobs:
           python src/features/engineer.py \
           --input data/processed/cleaned_house_data.csv \
           --output data/featured_house_data.csv \
-          --preprocessor models/trained/preprocessor.
-
-      - name: Install Docker Compose
-        run: |
-          sudo curl -L "https://github.com/docker/compose/releases/download/v2.24.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-          sudo chmod +x /usr/local/bin/docker-compose
-
-      - name: Setup MLFlow
-        run: |
-          docker-compose -f deployment/mlflow/docker_compose.yml up -d
+          --preprocessor models/trained/preprocessor.pkl
           
       - name: Train the Model
         run: |
@@ -55,7 +65,3 @@ jobs:
           --data data/processed/featured_house_data.csv \
           --models-dir models \
           --mlflow-tracking-uri http://localhost:5555
-
-      - name: Clean up MLFlow
-        run: |
-          docker-compose -f deployment/mlflow/docker_compose.yml down
