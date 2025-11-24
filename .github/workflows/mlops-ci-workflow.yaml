@@ -73,9 +73,16 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build and Push
+        id: docker_build
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: ritishadhikari/fastapi:{{ github.sha }}
+          tags: ritishadhikari/fastapi:${{ github.run_id }}
+          context: "."
+          file: "Dockerfile"
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          tags: ritishadhikari/fastapi:$(date +%Y_%m_%d_%H_%M_%S)
           context: "."
           file: "Dockerfile"
