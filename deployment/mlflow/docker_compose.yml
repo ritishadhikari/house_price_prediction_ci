@@ -19,7 +19,7 @@ services:
     volumes:
       - ./.mlflow_data:/mlflow
 
-volumes:
-  mlflow_data:
-    driver: local
+# volumes:
+#   mlflow_data:
+#     driver: local
 
