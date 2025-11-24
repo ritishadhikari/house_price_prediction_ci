@@ -24,16 +24,12 @@ jobs:
           --health-interval=5s
           --health-timeout=3s
           --health-retries=10
-        entrypoint:
-          - mlflow
-          - server
-          - --host
-          - 0.0.0.0
-          - --backend-store-uri
-          - sqlite:///mlflow.db
-          - --default-artifact-root
-          - /tmp/mlruns
-
+          --entrypoint "/bin/sh -c"
+        command: >
+          mlflow server
+          --host 0.0.0.0
+          --backend-store-uri sqlite:///mlflow.db
+          --default-artifact-root /tmp/mlruns
 
     steps:
       
