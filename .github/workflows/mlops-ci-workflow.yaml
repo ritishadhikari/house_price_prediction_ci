@@ -19,13 +19,13 @@ jobs:
         image: ghcr.io/mlflow/mlflow:latest
         ports:
           - 5555:5000
-        options: >
-          --health-cmd="curl --fail http://localhost:5000/api/2.0/mlflow/experiments/list || exit 1"
-          --health-interval=5s
-          --health-timeout=3s
-          --health-retries=10
-          --entrypoint "/bin/sh -c" 
-          "mlflow server --host 0.0.0.0 --backend-store-uri sqlite:///mlflow.db --default-artifact-root /tmp/mlruns"
+        
+        # 1. Use the 'options' field only for Docker CLI options (like health checks)
+        # We must use single-line keys to avoid the previous multiline YAML parsing error.
+        options: --health-cmd="curl --fail http://localhost:5000/api/2.0/mlflow/experiments/list || exit 1" --health-interval=5s --health-timeout=3s --health-retries=10
+        
+        # 2. Use the 'command' field for the actual command to run inside the container.
+        command: mlflow server --host 0.0.0.0 --backend-store-uri sqlite:///mlflow.db --default-artifact-root /tmp/mlruns
 
     steps:
       
