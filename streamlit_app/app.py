@@ -4,6 +4,9 @@ import json
 import time
 import os
 import socket
+from dotenv import load_dotenv
+
+load_dotenv()
 
 st.set_page_config(
     page_title="House Price Predictor",
@@ -106,7 +109,11 @@ with col2:
                 "condition":"Good"
             }
             try:
-                api_endpoint=os.getenv("API_URL","http://fastapi:8000/")
+                api_endpoint=os.environ.get('API_URL',"http://fastapi_app:8000/")
+                if api_endpoint is None:
+                    st.write("Not able to fetch the API_URL")
+                    print("Not able to fetch the API_URL")
+                # print(api_endpoint)
                 predict_url=f"{api_endpoint.rstrip('/')}/predict"
                 st.write(f"Connecting to API at: {predict_url}")
                 response=requests.post(predict_url,json=api_data)
