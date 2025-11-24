@@ -39,9 +39,9 @@ jobs:
           --output data/featured_house_data.csv \
           --preprocessor models/trained/preprocessor.
           
-      - name: MLFlow Installation
+      - name: Setup MLFlow
         run: |
-          docker pull 
+          docker-compose -f deployment/mlflow/docker_compose.yml up -d
       
       - name: Train the Model
         run: |
@@ -50,3 +50,7 @@ jobs:
           --data data/processed/featured_house_data.csv \
           --models-dir models \
           --mlflow-tracking-uri http://localhost:5555
+
+      - name: Clean up MLFlow
+        run: |
+          docker-compose -f deployment/mlflow/docker_compose.yml down
