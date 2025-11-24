@@ -8,24 +8,9 @@ on:
     branches:
       - main
 
-
-
 jobs:
   workflow:
     runs-on: ubuntu-latest
-
-    services:
-      mlflow:
-        image: ghcr.io/mlflow/mlflow:latest
-        ports:
-          - 5555:5000
-        
-        # 1. Use the 'options' field only for Docker CLI options (like health checks)
-        # We must use single-line keys to avoid the previous multiline YAML parsing error.
-        options: --health-cmd="curl --fail http://localhost:5000/api/2.0/mlflow/experiments/list || exit 1" --health-interval=5s --health-timeout=3s --health-retries=10
-        
-        # 2. Use the 'command' field for the actual command to run inside the container.
-        command: mlflow server --host 0.0.0.0 --backend-store-uri sqlite:///mlflow.db --default-artifact-root /tmp/mlruns
 
     steps:
       
@@ -54,7 +39,16 @@ jobs:
           --input data/processed/cleaned_house_data.csv \
           --output data/featured_house_data.csv \
           --preprocessor models/trained/preprocessor.pkl
-          
+      
+      - name: Setup MLFlow
+        run: |
+          docker pull ghcr.io/mlflow/mlflow:latest
+          docker run -d -p 5555:5000 --name mlflow-server ghcr.io/mlflow/mlflow:latest \
+          mlflow server \
+          --host 0.0.0.0 \
+          --backend-store-uri sqlite:///mlflow/mlflow.db \
+          --default-artifact-root /mlflow/mlruns
+
       - name: Train the Model
         run: |
           python src/models/train_model.py \
@@ -62,3 +56,9 @@ jobs:
           --data data/processed/featured_house_data.csv \
           --models-dir models \
           --mlflow-tracking-uri http://localhost:5555
+
+      - name: Cleaning up MLFlow
+        run: |
+          docker stop mlflow-server
+          docker rm mlflow-server
+          docker rmi ghcr.io/mlflow/mlflow:latest
