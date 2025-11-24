@@ -44,36 +44,12 @@ jobs:
           sudo curl -L "https://github.com/docker/compose/releases/download/v2.24.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
           sudo chmod +x /usr/local/bin/docker-compose
 
-      - name: Prepare MLflow Volume Permissions
-        run: |
-          # Create the directory on the runner's filesystem that the volume will use
-          mkdir -p .mlflow_data
-          # Set permissions to be fully accessible (777) so the non-root user in the container can write
-          sudo chmod -R 777 .mlflow_data/
-          
       - name: Setup MLFlow
         run: |
           docker-compose -f deployment/mlflow/docker_compose.yml up -d
-
-
-      - name: Fix MLflow Container Permissions
-        run: |
-          # Wait 5 seconds to ensure the service starts and the bind mount is established
-          sleep 5 
-          # Use docker exec to change the ownership of the /mlflow directory to the user 
-          # running the MLflow process (often user 1000 or the same name as the directory owner)
-          # We use chown -R 1000:1000 as a common standard for non-root container users,
-          # or simply change ownership to the 'mlflow' group/user if it exists.
-          # We will try changing ownership to a non-root group/user common in Alpine/Ubuntu images.
-          # If the mlflow user is not 'mlflow', we will rely on chown -R $USER:$USER
-          docker exec mlflow-tracking-server chown -R 1000:1000 /mlflow || true
-          # Running chown as root inside container. This is necessary because the host file 
-          # system mount might be owned by root due to Docker's operation.
-      
-      
+          
       - name: Train the Model
         run: |
-          sleep 5
           python src/models/train_model.py \
           --config configs/model_config.yaml \
           --data data/processed/featured_house_data.csv \
