@@ -128,7 +128,7 @@ jobs:
 
     steps: 
     - name: Checkout Code
-      uses: actions/checkout@
+      uses: actions/checkout@v2
       
     - name: Download Trained Model
       uses: actions/download-artifact@v4
@@ -170,7 +170,7 @@ jobs:
     - name: Push Docker image to Dockerhub
       run: |
         COMMIT_HASH=$(echo ${{ github.sha }} | cut -c1-7)
-        docker tag docker.io/${{ vars.DOCKERHUB_USERNAME }}/house-price-model:$COMMIT_HASH  docker tag docker.io/${{ vars.DOCKERHUB_USERNAME }}/house-price-model:latest
+        docker tag docker.io/${{ vars.DOCKERHUB_USERNAME }}/house-price-model:$COMMIT_HASH docker.io/${{ vars.DOCKERHUB_USERNAME }}/house-price-model:latest
         docker push docker.io/${{ vars.DOCKERHUB_USERNAME }}/house-price-model:$COMMIT_HASH
         docker push docker.io/${{ vars.DOCKERHUB_USERNAME }}/house-price-model:latest
 
