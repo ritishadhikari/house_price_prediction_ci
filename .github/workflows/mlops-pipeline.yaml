@@ -1,0 +1,176 @@
+name: MLOPS Pipeline
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_all:
+        description: 'Run all jobs'
+        required: false
+        default: 'true'
+      run_data_processing:
+        description: 'Run Data Processing Job'
+        required: false
+        default: 'false'
+      run_model_training:
+        description: 'Run Model Training Job'
+        required: false 
+        default: 'false'
+      run_build_and_publish:
+        description: 'Run build and Publish Job'
+        required: false
+        default: 'false'
+
+  release:
+    types: [created]
+    branches: [ main ]
+    tags: ['v*.*.*']
+
+jobs:
+  data-processing:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v2
+    
+    - name: Setup Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: '3.11.5'  
+    
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Process Data
+      run: |
+        python src/data/run_processing.py --input data/raw/house_data.csv \
+        --output data/processed/cleaned_house_data.csv
+
+    - name: Engineer Features
+      run: |
+        python src/features/engineer.py --input data/processed/cleaned_house_data.csv \
+        --output data/processed/featured_data.csv --preprocessor models/trained/preprocessor.pkl
+    
+    - name: Upload Processed Data
+      uses: actions/upload-artifact@v4
+      with:
+        name: processed-data
+        path: data/processed/featured_house_data.csv
+    
+    - name: Upload Preprocessor
+      uses: actions/upload-artifact@v4
+      with:
+        name: preprocessor
+        path: models/trained/preprocessor.pkl
+
+  model-training:
+    needs: data-processing
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+      
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11.5' 
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip 
+          pip install -r requirements.txt
+
+      - name: Download processed data
+        uses: actions/download-artifact@v4
+        with:
+          name: processed-data
+          path: data/processed/
+
+      - name: Setup MLFlow
+        run: |
+          docker pull ghcr.io/mlflow/mlflow:latest
+          docker run -d -p 5555:5000 --name mlflow-server ghcr.io/mlflow/mlflow:latest \
+          mlflow server \
+          --host 0.0.0.0 \
+          --backend-store-uri sqlite:///mlflow.db \
+          --default-artifact-root /tmp/mlruns
+
+      - name: Wait for MLFlow to start
+        run: |
+          for i in {1..10}; do
+            curl -f http://localhost:5000/health || sleep 5
+          done
+
+      - name: Train Model
+        run: | 
+          mkdir -p models
+          python src/models/train_model.py --config configs/model_config.yaml \
+          --data data/processed/featured_house_data.csv --models-dir models \
+          --mlflow-tracking-uri http://localhost:5000
+
+      - name: Upload Trained Model
+        uses: actions/upload-artifact@v4
+        with: 
+          name: trained-model
+          path: models/
+
+      - name: Clean up MLFlow
+        run: |
+          docker stop mlflow-server || true
+          docker rm mlflow-server || true
+  
+  build-and-publish:
+    needs: model-training
+    runs-on: ubuntu-latest
+
+    steps: 
+    - name: Checkout Code
+      uses: actions/checkout@
+      
+    - name: Download Trained Model
+      uses: actions/download-artifact@v4
+      with:
+        name: trained-model
+        path: models/
+    
+    - name: Download Preprocessor
+      uses: actions/download-artifact@v4
+      with: 
+        name: preprocessor
+        path: models/trained
+
+    - name: Setup Docker Buildx
+      uses: docker/setup-buildx-action@v1
+
+    - name: Build and Test Docker Image
+      run: |
+        COMMIT_HASH=$( echo ${{ github.sha }} | cut -c1-7)
+        docker build -t docker.io/${{ vars.DOCKERHUB_USERNAME }}/house-price-model:$COMMIT_HASH -f Dockerfile .
+        docker run -d -p 8000:8000 --name test-api docker.io/${{ vars.DOCKERHUB_USERNAME }}/house-price-model:$COMMIT_HASH
+        for i in {1..10}; do
+          curl -f http://localhost:8000/health  && break || sleep 5;
+        done
+        docker logs test-api
+
+    - name: Clean up Container
+      run: |
+        docker stop test-api || true
+        docker rm test-api || true
+    
+    - name: Login to Docker Container Registry
+      uses: docker/login-action@v2
+      with:
+        registry: docker.io
+        username: ${{ vars.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Push Docker image to Dockerhub
+      run: |
+        COMMIT_HASH=$(echo ${{ github.sha }} | cut -c1-7)
+        docker tag docker.io/${{ vars.DOCKERHUB_USERNAME }}/house-price-model:$COMMIT_HASH  docker tag docker.io/${{ vars.DOCKERHUB_USERNAME }}/house-price-model:latest
+        docker push docker.io/${{ vars.DOCKERHUB_USERNAME }}/house-price-model:$COMMIT_HASH
+        docker push docker.io/${{ vars.DOCKERHUB_USERNAME }}/house-price-model:latest
+
