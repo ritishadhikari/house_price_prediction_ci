@@ -153,6 +153,7 @@ jobs:
     - name: Build and Test Docker Image
       run: |
         COMMIT_HASH=$( echo ${{ github.sha }} | cut -c1-7)
+        
         docker build -t docker.io/${{ vars.DOCKERHUB_USERNAME }}/house-price-model:$COMMIT_HASH -f Dockerfile .
         docker run -d -p 8000:8000 --name test-api docker.io/${{ vars.DOCKERHUB_USERNAME }}/house-price-model:$COMMIT_HASH
         for i in {1..10}; do
@@ -160,10 +161,21 @@ jobs:
         done
         docker logs test-api
 
+        docker build -t docker.io/${{ vars.DOCKERHUB_USERNAME }}/streamlit-app:$COMMIT_HASH -f streamlit_app/Dockerfile ./streamlit_app
+        docker run -d -p 8501:8501 --name test-streamlit docker.io/${{ vars.DOCKERHUB_USERNAME }}/streamlit-app:$COMMIT_HASH
+        for i in {1..10}; do
+          curl -f http://localhost:8501/ && break || sleep 5;
+        done
+        docker logs test-streamlit
+
+
     - name: Clean up Container
       run: |
         docker stop test-api || true
         docker rm test-api || true
+        docker stop test-streamlit || true
+        docker rm test-streamlit || true
+  
     
     - name: Login to Docker Container Registry
       uses: docker/login-action@v2
@@ -178,4 +190,8 @@ jobs:
         docker tag docker.io/${{ vars.DOCKERHUB_USERNAME }}/house-price-model:$COMMIT_HASH docker.io/${{ vars.DOCKERHUB_USERNAME }}/house-price-model:latest
         docker push docker.io/${{ vars.DOCKERHUB_USERNAME }}/house-price-model:$COMMIT_HASH
         docker push docker.io/${{ vars.DOCKERHUB_USERNAME }}/house-price-model:latest
+        docker tag docker.io/${{ vars.DOCKERHUB_USERNAME }}/streamlit-app:$COMMIT_HASH docker.io/${{ vars.DOCKERHUB_USERNAME }}/streamlit-app:latest
+        docker push docker.io/${{ vars.DOCKERHUB_USERNAME }}/streamlit-app:$COMMIT_HASH
+        docker push docker.io/${{ vars.DOCKERHUB_USERNAME }}/streamlit-app:latest
+        
 
