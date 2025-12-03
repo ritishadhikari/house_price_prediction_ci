@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: streamlit-deployment
+  labels:
+    app: streamlit-app
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: streamlit-app
+  template:
+    metadata:
+      labels:
+        app: streamlit-app
+    spec:
+      containers:
+      - name: streamlit-app-container
+        image: docker.io/ritishadhikari/streamlit-app:latest
+        ports:
+        - containerPort: 8501
+        env:
+        # Inject the API_URL from the Secret
+        - name: API_URL
+          valueFrom:
+            secretKeyRef:
+              name: streamlit-secrets
+              key: API_URL
+        # Set a non-sensitive variable directly, e.g., the app version (optional)
+        - name: APP_VERSION
+          value: "1.0.0"

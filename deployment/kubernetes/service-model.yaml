@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: model # <-- Service Name used by Streamlit (http://model:8000)
+  labels:
+    app: house-price-model
+spec:
+  selector:
+    app: house-price-model # Matches the deployment's labels
+  ports:
+  - name: http
+    protocol: TCP
+    port: 8000 # The port the service listens on (internal cluster access)
+    targetPort: 8000 # The port the container exposes
+    nodePort: 30100
+  type: NodePort # Use ClusterIP for internal communication

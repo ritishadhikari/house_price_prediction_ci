@@ -3,3 +3,5 @@ hpenv/*
 .venv
 .ipynb_checkpoints
 .env
+kind_3_node_clusters.yml
+kube-ops-view
