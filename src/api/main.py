@@ -29,6 +29,7 @@ app.add_middleware(
     allow_headers=["*"]
     )
 
+
 # Initialize and Instrument Prometheus metric
 Instrumentator().instrument(app=app).expose(app=app)
 
