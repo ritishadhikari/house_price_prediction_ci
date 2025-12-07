@@ -1,0 +1,11 @@
+Content-Type: application/json
+Host: localhost:30100
+
+{
+    "sqft": 4500,
+    "bedrooms": 4,
+    "bathrooms": 2,
+    "year_built": 2014,
+    "condition": "Good",
+    "location": "Urban"
+}

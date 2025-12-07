@@ -4,6 +4,9 @@ from schemas import HousePredictionRequest, PredictionResponse
 from inference import predict_price, batch_predict
 from typing import List
 from prometheus_fastapi_instrumentator import Instrumentator
+from prometheus_client import start_http_server
+import threading
+
 app=FastAPI(
     title="House Price Prediction API",
     description=(
@@ -29,9 +32,13 @@ app.add_middleware(
     allow_headers=["*"]
     )
 
-
 # Initialize and Instrument Prometheus metric
 Instrumentator().instrument(app=app).expose(app=app)
+
+
+# Start Prometheus metrics server on port 9100 in a background thread
+def start_metrics_server():
+    start_http_server(port=9100)
 
 @app.get("/health", response_model=dict)
 async def health_check():
