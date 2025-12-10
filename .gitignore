@@ -6,3 +6,5 @@ hpenv/*
 kind_3_node_clusters.yml
 kube-ops-
 2025*
+metrics-server*
+autoscaler

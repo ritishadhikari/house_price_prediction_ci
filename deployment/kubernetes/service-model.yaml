@@ -12,5 +12,9 @@ spec:
     protocol: TCP
     port: 8000 # The port the service listens on (internal cluster access)
     targetPort: 8000 # The port the container exposes
-    nodePort: 30100
+    nodePort: 
+  - name: metrics
+    port: 9100
+    targetPort: 9100
   type: NodePort # Use ClusterIP for internal communication
+  
