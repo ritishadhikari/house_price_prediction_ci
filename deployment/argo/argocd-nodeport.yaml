@@ -1,0 +1,8 @@
+# argocd-nodeport-patch.yaml
+spec:
+  type: NodePort
+  ports:
+  - nodePort: 32100
+    port: 443
+    targetPort: 8080
+    protocol: TCP
