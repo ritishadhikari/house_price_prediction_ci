@@ -14,10 +14,13 @@ spec:
       metadata: 
         serverAddress: http://prom-kube-prometheus-stackprometheus.monitoring.svc:9090
         metricName: fastapi_latency_p95
+        # Ensure the query returns a single numerical value (the P95 latency)
         query: | 
-          histogram_quantile(0.95,sum(rate(http_request_duration_seconds_bucket[1m])) by (le))
-        threshold: "0.1"  
+          histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[1m])) by (le))
+        # Set a realistic latency threshold (e.g., 1.0 second). Adjust this based on your SLA.
+        threshold: "1.0"
     - type: cpu
-      metricType: Utilization  # Allowed types are 'Utilization' or 'AverageValue'
+      metricType: Utilization 
       metadata:
-        value: "50"
+        # **CORRECTED:** Must be 'averageUtilization' when metricType is Utilization
+        averageUtilization: "50"
