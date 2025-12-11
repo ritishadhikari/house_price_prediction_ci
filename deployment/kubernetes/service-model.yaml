@@ -16,5 +16,4 @@ spec:
   - name: metrics
     port: 9100
     targetPort: 9100
-  type: NodePort # Use ClusterIP for internal communication
-  
+  type: NodePort # Use ClusterIP for internal communication  
