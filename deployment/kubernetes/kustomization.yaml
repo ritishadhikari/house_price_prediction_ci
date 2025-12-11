@@ -6,3 +6,4 @@ resources:
   - deployment-streamlit.yaml
   - service-streamlit.yaml
   - secrets-streamlit.yaml
+  - fastapi-scaledobject.yaml
