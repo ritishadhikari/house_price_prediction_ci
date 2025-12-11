@@ -17,6 +17,7 @@ spec:
       containers:
       - name: streamlit-app-container
         image: docker.io/ritishadhikari/streamlit-app:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 8501
         env:
